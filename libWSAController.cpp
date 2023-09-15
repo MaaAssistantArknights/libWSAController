@@ -361,6 +361,12 @@ public:
 	}
 };
 
+void LIBWSACONTROLLER libWSAController::CreateWSAController(IWSAController** pp)
+{
+	if (pp == nullptr) return;
+	*pp = new WSAController;
+}
+
 WSAControllerWrap LIBWSACONTROLLER libWSAController::WSAControllerWrap::CreateWSAController(
 	lib_callback callback_function, bool resizeWindow, bool goldenBorder, bool replace
 )
