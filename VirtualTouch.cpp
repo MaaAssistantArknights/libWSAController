@@ -925,6 +925,7 @@ namespace SuperToucher
             callbackfe("Failed to commit buffer.");
             return std::nullopt;
         }
+        // if (closed) WaitTouch();
 
         TouchedPointID result = MakeTouchedPointerID();
         allPoints[result] = pt;
@@ -961,11 +962,12 @@ namespace SuperToucher
             callbackfe("Cannot push message queue buffer.");
             return false;
         }
-        if (closed && (!pointsPool->CommitActions() || !touchMsgs->CommitBuffer()))
+        if (!pointsPool->CommitActions() || !touchMsgs->CommitBuffer())
         {
             callbackfe("Failed to commit buffer.");
             return false;
         }
+        // if (closed) WaitTouch();
 
         return true;
     }
@@ -1001,11 +1003,12 @@ namespace SuperToucher
             callbackfe("Cannot push message queue buffer.");
             return false;
         }
-        if (closed && (!pointsPool->CommitActions() || !touchMsgs->CommitBuffer()))
+        if (!pointsPool->CommitActions() || !touchMsgs->CommitBuffer())
         {
             callbackfe("Failed to commit buffer.");
             return false;
         }
+        // if (closed) WaitTouch();
 
         return true;
     }
