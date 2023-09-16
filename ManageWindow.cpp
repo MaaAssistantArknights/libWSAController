@@ -203,14 +203,8 @@ namespace SuperWindow
 				std::this_thread::yield();
 			}
 			for (auto& i : m_allWnds)
-			{
 				if (!DestroyWindow(i.second.redir))
 					callbackfe(std::format("DestroyWindow Failed!! GetLastError() = {}", GetLastError()));
-			}
-			while (GetMessage(&msg, NULL, 0, 0)) {
-				TranslateMessage(&msg);
-				DispatchMessage(&msg);
-			}
 		};
 		m_mainLoop = std::jthread(loopFunc);
 		return m_mainLoop.joinable();

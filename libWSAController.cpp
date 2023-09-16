@@ -361,12 +361,6 @@ public:
 	}
 };
 
-void LIBWSACONTROLLER libWSAController::CreateWSAController(IWSAController** pp)
-{
-	if (pp == nullptr) return;
-	*pp = new WSAController;
-}
-
 WSAControllerWrap LIBWSACONTROLLER libWSAController::WSAControllerWrap::CreateWSAController(
 	lib_callback callback_function, bool resizeWindow, bool goldenBorder, bool replace
 )
@@ -375,3 +369,25 @@ WSAControllerWrap LIBWSACONTROLLER libWSAController::WSAControllerWrap::CreateWS
 	pInstance->Init(resizeWindow, goldenBorder, replace, callback_function);
 	return WSAControllerWrap(pInstance);
 }
+
+#include "VirtualTouch.h"
+#include "ManageWindow.h"
+static class __CheckGuard
+{
+public:
+	__CheckGuard()
+	{
+		// TODO
+		// CreateFileW( ... SHARE_NONE ... )
+	}
+
+	~__CheckGuard()
+	{
+		if (SuperToucher::IsReady())
+		{
+			MessageBox(NULL, TEXT("Error"), TEXT("Error"), MB_OK);
+			SuperWindow::ReleaseAll();
+			SuperToucher::Release();
+		}
+	}
+} ___SuperCheckGuardAndFileLocker___;

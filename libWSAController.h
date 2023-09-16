@@ -44,19 +44,23 @@ namespace libWSAController
 		virtual void WaitInput(tstring pkgName) PURE;
 	};
 
-	void LIBWSACONTROLLER CreateWSAController(IWSAController**);
-
 	class WSAControllerWrap
 	{
 	public:
 		static WSAControllerWrap LIBWSACONTROLLER CreateWSAController(lib_callback, bool resizeWindow, bool goldenBorder, bool replace);
 
-		explicit WSAControllerWrap(std::nullptr_t = nullptr) : m_(nullptr) {}
-		explicit WSAControllerWrap(IWSAController* ptr) : m_(ptr) {}
-		explicit WSAControllerWrap(WSAControllerWrap&& o) : m_(o.m_) { o.m_ = nullptr; }
+		WSAControllerWrap(std::nullptr_t = nullptr)
+			: m_(nullptr) {}
+		WSAControllerWrap(IWSAController* ptr)
+			: m_(ptr) {}
+		~WSAControllerWrap()
+		{
+			if (m_) { m_->ReleaseAll(); delete m_; }
+			m_ = nullptr;
+		}
 
 		WSAControllerWrap& operator=(const WSAControllerWrap&) = delete;
-		WSAControllerWrap& operator=(const WSAControllerWrap&& o) { m_ = o.m_; }
+		WSAControllerWrap& operator=(const WSAControllerWrap&&) = delete;
 
 		operator bool()
 		{

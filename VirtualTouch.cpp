@@ -22,7 +22,7 @@
 
 namespace SuperToucher
 {
-    constexpr size_t max_touch_point_count = 8;
+    constexpr size_t max_touch_point_count = 512;
     constexpr size_t msg_queue_max_length = 512;
 
     constexpr size_t jmp_code_size = 32;
@@ -746,6 +746,7 @@ namespace SuperToucher
     std::unique_ptr<ListQueue<MsgQueue>> touchMsgs;
     std::unique_ptr<InjectedCode> fn_GetPointerType;
     std::unique_ptr<InjectedCode> fn_GetPointerTouchInfo;
+    //std::unique_ptr<InjectedCode> fn_;
     std::unique_ptr<AllPointsController> pointsPool;
 
     bool Attach(DWORD pid)
@@ -925,7 +926,6 @@ namespace SuperToucher
             callbackfe("Failed to commit buffer.");
             return std::nullopt;
         }
-        // if (closed) WaitTouch();
 
         TouchedPointID result = MakeTouchedPointerID();
         allPoints[result] = pt;
@@ -962,12 +962,11 @@ namespace SuperToucher
             callbackfe("Cannot push message queue buffer.");
             return false;
         }
-        if (!pointsPool->CommitActions() || !touchMsgs->CommitBuffer())
+        if (closed && (!pointsPool->CommitActions() || !touchMsgs->CommitBuffer()))
         {
             callbackfe("Failed to commit buffer.");
             return false;
         }
-        // if (closed) WaitTouch();
 
         return true;
     }
@@ -1003,17 +1002,16 @@ namespace SuperToucher
             callbackfe("Cannot push message queue buffer.");
             return false;
         }
-        if (!pointsPool->CommitActions() || !touchMsgs->CommitBuffer())
+        if (closed && (!pointsPool->CommitActions() || !touchMsgs->CommitBuffer()))
         {
             callbackfe("Failed to commit buffer.");
             return false;
         }
-        // if (closed) WaitTouch();
 
         return true;
     }
     
-    bool SuperToucher::UpAll()
+    bool UpAll()
     {
         LogTraceFunction;
 
@@ -1076,22 +1074,3 @@ namespace SuperToucher
         return mouseInject->SetLParam(0);
     }
 }
-
-static class __CheckGuard
-{
-public:
-    __CheckGuard()
-    {
-        // TODO
-        // CreateFileW( ... SHARE_NONE ... )
-    }
-
-    ~__CheckGuard()
-    {
-        if (SuperToucher::m_good)
-        {
-            MessageBox(NULL, TEXT("Error"), TEXT("Error"), MB_OK);
-            SuperToucher::Release();
-        }
-    }
-} ___SuperCheckGuardAndFileLocker___;

@@ -56,7 +56,7 @@ struct RunInputInjectorMainEssential
     HWND hWnd;
 };
 
-std::mutex write_lock;
+std::atomic<HWND> last_captured_hwnd = 0;
 void RunInputInjectorMain(InputInjector* self)
 {
     SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
@@ -86,13 +86,19 @@ void RunInputInjectorMain(InputInjector* self)
 
     while (!self->stop_requested) {
         if (self->Empty()) {
+            last_captured_hwnd.store(NULL);
             std::this_thread::yield();
             continue;
         }
 
+        for (HWND cur_hwnd = last_captured_hwnd.load();
+            cur_hwnd != 0 && cur_hwnd != m_hwnd;
+            cur_hwnd = last_captured_hwnd.load());
+        SetForegroundWindow(m_hwnd);
+        last_captured_hwnd.store(m_hwnd);
+
         InputInjector::MsgUnit& command = m_msgs.front();
 
-        write_lock.lock();
         switch (command.type) {
         case InputType::KeyPress:
             SendMessage(m_hwnd, WM_KEYDOWN, command.wParam, 0);
@@ -106,7 +112,6 @@ void RunInputInjectorMain(InputInjector* self)
                 if (retry_times > max_retry_times)
                     throw std::runtime_error("touch err!");
                 retry_times++;
-                write_lock.unlock();
                 std::this_thread::yield();
                 continue;
             }
@@ -122,7 +127,6 @@ void RunInputInjectorMain(InputInjector* self)
                 if (retry_times > max_retry_times)
                     throw std::runtime_error("touch err!");
                 retry_times++;
-                write_lock.unlock();
                 std::this_thread::yield();
                 continue;
             }
@@ -149,7 +153,6 @@ void RunInputInjectorMain(InputInjector* self)
                 if (retry_times > max_retry_times)
                     throw std::runtime_error("touch err!");
                 retry_times++;
-                write_lock.unlock();
                 std::this_thread::yield();
                 continue;
             }
@@ -166,7 +169,6 @@ void RunInputInjectorMain(InputInjector* self)
                 if (retry_times > max_retry_times)
                     throw std::runtime_error("touch err!");
                 retry_times++;
-                write_lock.unlock();
                 std::this_thread::yield();
                 continue;
             }
@@ -204,13 +206,13 @@ void RunInputInjectorMain(InputInjector* self)
                 if (retry_times > max_retry_times)
                     throw std::runtime_error("touch err!");
                 retry_times++;
-                write_lock.unlock();
                 std::this_thread::yield();
                 continue;
             }
             Sleep(80);
             SuperToucher::Up(*m_touch, touch_pt.x, touch_pt.y);
             Sleep(20);
+            SendMessage(m_hwnd, WM_MOUSELEAVE, 0, 0);
             break;
         case InputType::TouchDown:
             ClientToScreen(m_hwnd, &touch_pt);
@@ -220,7 +222,6 @@ void RunInputInjectorMain(InputInjector* self)
                 if (retry_times > max_retry_times)
                     throw std::runtime_error("touch err!");
                 retry_times++;
-                write_lock.unlock();
                 std::this_thread::yield();
                 continue;
             }
@@ -233,7 +234,6 @@ void RunInputInjectorMain(InputInjector* self)
                 if (retry_times > max_retry_times)
                     throw std::runtime_error("touch err!");
                 retry_times++;
-                write_lock.unlock();
                 std::this_thread::yield();
                 continue;
             }
@@ -245,14 +245,13 @@ void RunInputInjectorMain(InputInjector* self)
                 if (retry_times > max_retry_times)
                     throw std::runtime_error("touch err!");
                 retry_times++;
-                write_lock.unlock();
                 std::this_thread::yield();
                 continue;
             }
             self->m_touchids.erase(*m_touch);
+            SendMessage(m_hwnd, WM_MOUSELEAVE, 0, 0);
             break;
         }
-        write_lock.unlock();
 
         m_msgs.pop();
         retry_times = 0;
